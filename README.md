@@ -27,10 +27,20 @@ Production-oriented appointment booking SaaS platform built with Next.js 16 App 
 - Health endpoint `GET /api/v1/health` checking live PostgreSQL connectivity
 - Multi-stage `Dockerfile` + `docker-compose.yml` (`db` → `migrate` → `seed` → `app`) & `docker-compose.prod.yml`
 
+**Phase 2 (Security, PostgreSQL Rate Limiter & Revocable Host Auth) — Completed:**
+
+- Argon2id password verification + revocable PostgreSQL `host_sessions` (`SHA-256` token hashes, `HttpOnly` `SameSite=Lax` cookie)
+- CSRF origin/referer + `Content-Type: application/json` guard (`src/lib/auth/csrf.ts`)
+- AES-256-GCM HKDF-sealed encryption & canonical JSON fingerprinting utilities (`src/lib/auth/crypto.ts`)
+- PostgreSQL-backed sliding-window rate limiter (`src/lib/rate-limit/pg-rate-limiter.ts`)
+- Unified JSON API endpoints: `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`, `GET/PUT /api/v1/host/settings` (synchronized via `SELECT ... FOR UPDATE` on `hosts` + `@js-temporal/polyfill` IANA validation)
+- Host Login UI (`/login`), protected Dashboard shell (`/dashboard`), and Host Settings UI (`/dashboard/settings`) consuming `/api/v1/*` via `src/lib/api-client.ts`
+- Vitest unit & real-PostgreSQL integration test suites (`npm run test:unit`, `npm run test:integration`)
+
 **Not Yet Implemented (Planned in Upcoming Phases):**
 
-- Host authentication endpoints & dashboard UI (Phase 2)
-- `@js-temporal/polyfill` availability engine, DST validation & event type CRUD (Phase 3)
+- Event type CRUD, weekly multi-window schedules, and date overrides (Phase 3)
+- Temporal DST availability generation engine (Phase 3)
 - Transactional booking lifecycle (`hold`, `confirm`, `cancel`, `reschedule`), idempotency & concurrency test suite (Phase 4)
 - Transactional outbox worker & Resend email delivery (Phase 5)
 - Public booking & guest management UI + Playwright E2E + k6 load tests (Phases 6–7)
@@ -84,15 +94,17 @@ curl http://localhost:3000/api/v1/health
 
 ## Available Scripts
 
-| Script                 | Description                                                    |
-| ---------------------- | -------------------------------------------------------------- |
-| `npm run dev`          | Start Next.js development server                               |
-| `npm run build`        | Build Next.js production bundle                                |
-| `npm run start`        | Start built production server                                  |
-| `npm run lint`         | Run ESLint across the repository                               |
-| `npm run typecheck`    | Generate Next.js route types and run `tsc --noEmit`            |
-| `npm run format`       | Format codebase with Prettier                                  |
-| `npm run format:check` | Check Prettier formatting without modifying files              |
-| `npm run db:generate`  | Generate Drizzle SQL migrations                                |
-| `npm run db:migrate`   | Run pending SQL migrations against `DATABASE_URL`              |
-| `npm run db:seed`      | Run idempotent demo host/event-type seed (non-production only) |
+| Script                     | Description                                                    |
+| -------------------------- | -------------------------------------------------------------- |
+| `npm run dev`              | Start Next.js development server                               |
+| `npm run build`            | Build Next.js production bundle                                |
+| `npm run start`            | Start built production server                                  |
+| `npm run lint`             | Run ESLint across the repository                               |
+| `npm run typecheck`        | Generate Next.js route types and run `tsc --noEmit`            |
+| `npm run format`           | Format codebase with Prettier                                  |
+| `npm run format:check`     | Check Prettier formatting without modifying files              |
+| `npm run db:generate`      | Generate Drizzle SQL migrations                                |
+| `npm run db:migrate`       | Run pending SQL migrations against `DATABASE_URL`              |
+| `npm run db:seed`          | Run idempotent demo host/event-type seed (non-production only) |
+| `npm run test:unit`        | Run Vitest unit tests                                          |
+| `npm run test:integration` | Run Vitest integration tests against real PostgreSQL           |

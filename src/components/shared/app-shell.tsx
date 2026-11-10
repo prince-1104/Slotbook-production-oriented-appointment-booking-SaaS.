@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 interface AppShellProps {
@@ -9,7 +10,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <div
               aria-hidden="true"
               className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-sm font-semibold text-white"
@@ -17,12 +18,16 @@ export function AppShell({ children }: AppShellProps) {
               S
             </div>
             <span className="text-base font-semibold tracking-tight text-slate-900">Slotbook</span>
-          </div>
+          </Link>
 
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-            Phase 1A Foundation
-          </span>
+          <nav aria-label="Primary navigation" className="flex items-center gap-4">
+            <Link
+              href="/login"
+              className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Host sign in
+            </Link>
+          </nav>
         </div>
       </header>
 

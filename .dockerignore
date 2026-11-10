@@ -5,9 +5,7 @@ node_modules
 .env.*
 !.env.example
 dist
-dist-tasks
 coverage
 playwright-report
 test-results
 *.tsbuildinfo
-
