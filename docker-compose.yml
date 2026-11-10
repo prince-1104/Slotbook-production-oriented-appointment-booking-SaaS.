@@ -1,0 +1,88 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-slotbook}
+      POSTGRES_USER: ${POSTGRES_USER:-slotbook}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - slotbook_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-slotbook} -d ${POSTGRES_DB:-slotbook}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: tasks
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-slotbook}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-slotbook}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    command: ['node', 'dist-tasks/scripts/migrate.js']
+    restart: 'no'
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: tasks
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-slotbook}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-slotbook}
+      ALLOW_DEMO_SEED: ${ALLOW_DEMO_SEED:-false}
+      DEMO_HOST_EMAIL: ${DEMO_HOST_EMAIL:-}
+      DEMO_HOST_PASSWORD: ${DEMO_HOST_PASSWORD:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    command: ['node', 'dist-tasks/scripts/seed.js']
+    restart: 'no'
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    environment:
+      NODE_ENV: production
+      APP_ENV: ${APP_ENV:-development}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-slotbook}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-slotbook}
+      SESSION_SECRET: ${SESSION_SECRET:?Set 32+ char SESSION_SECRET in .env}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Slotbook <noreply@example.com>}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://127.0.0.1:3000/api/v1/health\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  slotbook_pgdata:

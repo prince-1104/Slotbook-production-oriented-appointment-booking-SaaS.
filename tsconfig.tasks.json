@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": "./dist-tasks",
+    "incremental": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["scripts/**/*.ts", "src/lib/**/*.ts"],
+  "exclude": ["node_modules", ".next", "dist", "dist-tasks"]
+}

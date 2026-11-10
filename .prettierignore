@@ -3,6 +3,7 @@ node_modules/
 out/
 build/
 dist/
+dist-tasks/
 coverage/
 package-lock.json
 next-env.d.ts

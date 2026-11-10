@@ -1,0 +1,16 @@
+services:
+  seed:
+    environment:
+      APP_ENV: production
+      ALLOW_DEMO_SEED: 'false'
+    command: ['node', '-e', 'console.log("Demo seed disabled in production")']
+
+  app:
+    environment:
+      NODE_ENV: production
+      APP_ENV: production
+      APP_URL: ${APP_URL:?APP_URL must be set in production}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set in production}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set in production}
+      RESEND_API_KEY: ${RESEND_API_KEY:?RESEND_API_KEY must be set in production}
+      EMAIL_FROM: ${EMAIL_FROM:?EMAIL_FROM must be set in production}
